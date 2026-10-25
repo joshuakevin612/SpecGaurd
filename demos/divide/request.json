@@ -1,0 +1,5 @@
+{
+  "action": "prepare",
+  "spec_text": "Implement divide(a, b) returning a / b for numbers when b is nonzero. If b is zero, raise ValueError.",
+  "code": "def divide(a, b):\n    return a // b\n"
+}

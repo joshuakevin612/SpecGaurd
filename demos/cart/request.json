@@ -1,0 +1,5 @@
+{
+  "action": "prepare",
+  "spec_text": "Implement calculate_total(items, discount_percent=0) returning the sum of price times quantity for the cart. An empty cart returns 0. Each item must be a dictionary with price and quantity: price must be a finite nonnegative int or float, quantity must be a positive int, and booleans are invalid; invalid items raise ValueError. The discount_percent must be a finite int or float between 0 and 100 inclusive, excluding booleans; otherwise raise ValueError. Apply the percentage discount to the subtotal. Round the final result to two decimal places using Python round.",
+  "code": "def calculate_total(items, discount_percent=0):\n    return sum(item['price'] * item['quantity'] for item in items)\n"
+}

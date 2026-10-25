@@ -1,0 +1,5 @@
+{
+  "action": "prepare",
+  "spec_text": "Implement add(a, b) returning the sum of two integers.",
+  "code": "def add(a, b):\n    return a - b\n"
+}

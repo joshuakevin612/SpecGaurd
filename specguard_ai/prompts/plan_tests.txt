@@ -1,0 +1,28 @@
+Produce test case DATA for the supplied target requirements, not Python source.
+The requirements array contains the targets; context_requirements contains the
+full specification for consistency. Only target requirement IDs may appear in plans.
+Use the submitted code ONLY to identify its public function interface. Expected
+behavior must come from the spec, even when the submitted code is incorrect.
+For each target return one plan with 1-5 focused cases. Include normal and edge
+cases that distinguish an incorrect implementation where possible.
+Each case has args (positional argument array), kwargs (keyword argument object),
+expected (a JSON value, or null when expecting an exception), expected_exception
+(one allowed built-in exception name or null), and comparison (equal or approx).
+Use approx for floating-point output. All inputs and expected values must be
+literal JSON data. To represent nonfinite floating-point inputs use exactly
+{"__float__": "nan"}, {"__float__": "inf"}, or {"__float__": "-inf"}.
+For example, add(2,3) returning 5 has args=[2,3], kwargs={}, expected=5,
+expected_exception=null, comparison="equal".
+IMPORTANT: args is the OUTER positional argument list, not the contents of the
+first argument. If a function takes a list, that list must be nested inside args.
+For calculate_total([{"price": 10, "quantity": 2}], discount_percent=10), use:
+args=[[{"price": 10, "quantity": 2}]], kwargs={"discount_percent": 10}, expected=18.
+For calculate_total([]), args=[[]], NOT args=[].
+Never pass a numeric subtotal to calculate_total; its first argument is an item list.
+Prefer simple, easy-to-check numbers: discounts 0, 10, 100; rounding 12.346 to 12.35.
+Check every expected sum/product/discount carefully. 20 discounted by 50.5% is 9.9.
+For the cart's subtotal target use zero/default discount. For a discount target,
+use nonzero discounts. Respect all context constraints, including rounding.
+Return plans=[] for targets that cannot be tested through a known synchronous
+top-level function using literal inputs. Do not invent performance/security proofs.
+Do not copy the JSON schema itself. Return actual plan data for the user's target.

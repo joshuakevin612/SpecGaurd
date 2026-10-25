@@ -1,0 +1,27 @@
+[Unit]
+Description=SpecGuard public API (no Docker permissions)
+After=network-online.target specguard-worker.service
+Wants=network-online.target
+
+[Service]
+User=specguard-api
+Group=specguard-release
+WorkingDirectory=/opt/specguard/current
+EnvironmentFile=/etc/specguard/api.env
+ExecStart=/opt/specguard/current/.venv/bin/python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000 --workers 1 --proxy-headers --forwarded-allow-ips 127.0.0.1 --limit-concurrency 32
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=160
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/specguard
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+
+[Install]
+WantedBy=multi-user.target

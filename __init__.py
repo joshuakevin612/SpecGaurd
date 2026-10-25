@@ -1,1 +1,0 @@
-"""SpecGuard tests package."""

@@ -1,315 +1,125 @@
-# SpecGuard Backend
+# SpecGuard
 
-**SpecGuard** is an AI-powered software verification system for a hackathon.
+SpecGuard checks Python functions against written requirements. It combines a React workbench, a FastAPI API, NVIDIA/Nebius model integration, deterministic demo fixtures, SQLite persistence, and an isolated execution worker.
 
-This is the **backend/platform layer** (Person B's responsibility).
+Create a project, generate test cases, inspect requirement-level results, review proposed fixes, and retest against the original cases. Accounts, private projects, JSON/HTML reports, execution limits, and production deployment configuration are included.
 
-## Quick Start
+Generated tests provide finite behavioral evidence, not formal proof. Supported submissions are synchronous top-level Python functions with JSON inputs and outputs; arbitrary dependencies, async functions, and class APIs are unsupported.
 
-### Prerequisites
+## Requirements
 
-- Python 3.11+
-- Docker (optional, for sandboxed test execution)
-- pip
+- Python 3.11 (the CI-tested version)
+- Node.js 22 and npm
+- Docker for isolated execution; the local demo below can run without Docker
 
-### Installation
+## Setup
 
-1. **Clone and navigate to the project:**
-   ```bash
-   cd specguard
-   ```
-
-2. **Create a virtual environment:**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-### Running the Backend
-
-**Option 1: Local development (no Docker)**
-
-```bash
-uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+```sh
+git clone https://github.com/joshuakevin612/SpecGaurd.git
+cd SpecGaurd
+python -m venv .venv
 ```
 
-The API will be available at `http://localhost:8000`
+Activate the environment:
 
-**Option 2: Using Docker Compose**
-
-```bash
-docker-compose up
+```powershell
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
 ```
 
-### Running Tests
-
-```bash
-pytest tests/ -v
+```sh
+# Linux / macOS
+source .venv/bin/activate
 ```
 
-## API Endpoints
+Install the locked dependencies and create your local configuration:
 
-All endpoints expect JSON and return JSON (except `/projects/{id}/report?format=html` which returns HTML).
-
-### POST `/projects`
-
-Create a new verification project.
-
-**Request:**
-```json
-{
-  "specification": "The API must validate email addresses",
-  "source_code": "def validate_email(email): ..."
-}
+```sh
+python -m pip install -r requirements.txt
+npm --prefix frontend ci
 ```
 
-**Response:**
-```json
-{
-  "project_id": "proj_abc123def456"
-}
+```powershell
+# Windows PowerShell
+Copy-Item .env.example .env
 ```
 
-### POST `/projects/{project_id}/verify`
-
-Run verification on a project.
-
-**Request:**
-```json
-{
-  "use_docker": false
-}
+```sh
+# Linux / macOS
+cp .env.example .env
 ```
 
-**Response:**
-```json
-{
-  "project_id": "proj_abc123def456",
-  "requirements_count": 3,
-  "tests_count": 3,
-  "passed": 2,
-  "failed": 1,
-  "errors": 0,
-  "timeouts": 0,
-  "flaky": 0,
-  "total_results": 3
-}
+Keep `.env` private. Mock mode needs no provider credentials.
+
+## Run locally
+
+For a trusted local demo, start the API in your activated environment:
+
+```powershell
+# Windows PowerShell
+$env:SPECGUARD_RUNNER = 'local'
+$env:SPECGUARD_BACKEND_PROVIDER = 'mock'
+python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
 ```
 
-### GET `/projects/{project_id}/report`
-
-Get the verification report in JSON or HTML format.
-
-**Query Parameters:**
-- `format` (optional): `"json"` (default) or `"html"`
-
-**Response (JSON):**
-```json
-{
-  "report": {
-    "project_id": "proj_abc123def456",
-    "generated_at": "2024-10-20T12:34:56.789Z",
-    "summary": {
-      "total_requirements": 3,
-      "total_tests": 3,
-      "passed": 2,
-      "failed": 1,
-      ...
-    },
-    "requirements": [...],
-    "test_results": [...],
-    "static_findings": [...],
-    "fix_suggestions": [...]
-  },
-  "format": "json"
-}
+```sh
+# Linux / macOS
+SPECGUARD_RUNNER=local SPECGUARD_BACKEND_PROVIDER=mock python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
 ```
 
-### POST `/projects/{project_id}/retest`
+In a second terminal, start the frontend:
 
-Re-run verification after code changes.
-
-**Request:**
-```json
-{
-  "updated_code": "def validate_email(email): ..."
-}
+```sh
+npm --prefix frontend run dev
 ```
 
-**Response:**
-```json
-{
-  "project_id": "proj_abc123def456",
-  "passed": 3,
-  "failed": 0,
-  ...
-}
+Open [the workbench](http://127.0.0.1:5173). Use **New verification**, then **Load cart demo**, confirm the sharing notice, and run verification. Review a proposed fix and select **Retest original tests**. The API is available at [localhost:8000](http://127.0.0.1:8000); development API documentation is at [/docs](http://127.0.0.1:8000/docs).
+
+Mock mode supports the bundled demo specifications only. Projects and reports persist in `specguard.db`, created automatically. Local execution runs submitted code with your account permissions: use it only for trusted code and keep the service bound to localhost.
+
+### Live AI and accounts
+
+For arbitrary specifications, configure `NVIDIA_API_KEY`, `NVIDIA_BASE_URL`, `NVIDIA_MODEL`, and `NVIDIA_CODE_MODEL` in `.env`, then set `SPECGUARD_BACKEND_PROVIDER=nvidia` before starting the API. Nebius is available by explicitly selecting `nebius` and configuring its matching variables. Providers never fall back to each other; live calls incur provider usage.
+
+Set `SPECGUARD_AUTH_REQUIRED=true` before startup to enable the local account/sign-in flow. See [.env.example](.env.example) for configurable quotas, origins, and database settings. Never put provider keys or worker credentials in frontend `VITE_` variables.
+
+### Docker runner
+
+Docker is the default runner. With Docker running, build its image:
+
+```sh
+docker build -t specguard-runner:local -f backend/runner/Dockerfile .
 ```
 
-### GET `/health`
+Start the API with `SPECGUARD_RUNNER=docker`. The runner disables networking, applies resource/time limits, and uses a nonroot user with a read-only root filesystem. Expected answers stay outside the submission container.
 
-Health check endpoint.
+## Checks
 
-**Response:**
-```json
-{
-  "status": "ok"
-}
+In the activated environment:
+
+```sh
+python -m pip install -r requirements-dev.txt
+python scripts/check.py
 ```
 
-## Project Structure
+This runs Python linting/tests, dependency consistency, frontend type checking, and the production build. Standard tests use temporary databases and mock providers; Docker integration tests are opt-in with `SPECGUARD_DOCKER_TESTS=1`.
 
-```
-specguard/
-├── backend/
-│   ├── __init__.py
-│   ├── main.py                 # FastAPI app entry point
-│   ├── api/
-│   │   ├── __init__.py
-│   │   └── routes.py           # API endpoints
-│   ├── services/
-│   │   ├── __init__.py
-│   │   ├── ai_mocks.py         # Mock Person A functions (to be replaced)
-│   │   └── verification.py     # Verification pipeline orchestration
-│   ├── runner/
-│   │   ├── __init__.py
-│   │   └── pytest_runner.py    # Pytest test execution (local + Docker)
-│   ├── database/
-│   │   ├── __init__.py
-│   │   └── db.py               # SQLite schema and operations
-│   └── reports/
-│       ├── __init__.py
-│       └── generator.py        # JSON and HTML report generation
-├── tests/
-│   ├── __init__.py
-│   └── test_backend.py         # Unit tests
-├── shared_schemas.py           # Shared Pydantic models (contract with Person A)
-├── requirements.txt            # Python dependencies
-├── Dockerfile                  # Docker build configuration
-├── docker-compose.yml          # Docker Compose for local development
-└── README.md                   # This file
-```
+## Production setup
 
-## Shared Schemas (Contract with Person A)
+Follow [the deployment runbook](docs/DEPLOYMENT.md) for HTTPS, separate API/worker accounts, the private authenticated worker, Docker/gVisor, service configuration, backups, and rollback. Public deployment requires these controls and live provider configuration.
 
-The following Pydantic models define the interface between Person A (AI) and Person B (Platform):
+After checks and the frontend build, `python scripts/package_release.py` creates a deployment archive and checksums in ignored `artifacts/releases/`.
 
-- **Requirement**: Parsed specification requirement
-- **GeneratedTest**: Pytest test generated by AI
-- **StaticFinding**: Static analysis finding
-- **TestResult**: Result of test execution
-- **FixSuggestion**: Suggested fix for a failing requirement
+## Source layout
 
-See `shared_schemas.py` for details.
+| Path | Purpose |
+| --- | --- |
+| `frontend/` | React/TypeScript workbench and Vite build |
+| `backend/` | API, accounts, persistence, reports, and execution worker |
+| `specguard_ai/` | Model providers, test planning, validation, and repairs |
+| `shared/` | Shared data models |
+| `configs/`, `demos/` | Provider presets and runnable demo fixtures |
+| `deploy/`, `scripts/` | Deployment configuration and operational tools |
+| `tests/`, `.github/` | Regression tests and automated checks |
 
-## Development Notes
-
-### Mock vs. Real AI
-
-Currently, `backend/services/ai_mocks.py` provides mock implementations of:
-- `parse_spec()` - Extract requirements from specification
-- `generate_tests()` - Generate Pytest tests from requirements
-- `analyze_code()` - Perform static analysis
-- `suggest_fixes()` - Suggest code fixes
-
-These will be replaced by Person A's actual NVIDIA Nemotron implementations when ready.
-
-### Test Execution
-
-The test runner can operate in two modes:
-
-1. **Local** (default, for development):
-   ```python
-   runner = PytestRunner(use_docker=False)
-   ```
-   Tests run directly in the current Python environment.
-
-2. **Docker** (for sandboxing):
-   ```python
-   runner = PytestRunner(use_docker=True)
-   ```
-   Tests run in an isolated Docker container with resource limits.
-
-### Database
-
-SQLite is used for lightweight persistence. The database is initialized automatically on first run.
-
-### Reports
-
-Reports are generated in two formats:
-
-1. **JSON**: Structured data, suitable for programmatic consumption
-2. **HTML**: Human-readable, styled report
-
-## Testing the Backend
-
-Run the test suite:
-
-```bash
-pytest tests/test_backend.py -v
-```
-
-Expected output:
-```
-test_project_creation PASSED
-test_requirement_creation PASSED
-test_test_result_creation PASSED
-test_pytest_runner_locally PASSED
-test_pytest_runner_with_failure PASSED
-test_verification_service PASSED
-...
-```
-
-## Example Workflow
-
-```bash
-# 1. Start the backend
-uvicorn backend.main:app --reload
-
-# 2. Create a project
-curl -X POST http://localhost:8000/projects \
-  -H "Content-Type: application/json" \
-  -d '{
-    "specification": "The function add(a, b) must return the sum of a and b",
-    "source_code": "def add(a, b):\n    return a + b"
-  }'
-
-# Response: {"project_id": "proj_abc123def456"}
-
-# 3. Run verification
-curl -X POST http://localhost:8000/projects/proj_abc123def456/verify \
-  -H "Content-Type: application/json" \
-  -d '{"use_docker": false}'
-
-# 4. Get report
-curl http://localhost:8000/projects/proj_abc123def456/report?format=html > report.html
-
-# 5. Fix and retest
-curl -X POST http://localhost:8000/projects/proj_abc123def456/retest \
-  -H "Content-Type: application/json" \
-  -d '{"updated_code": "def add(a, b):\n    return a + b + 0"}'
-```
-
-## Limitations (MVP)
-
-1. **Mocks Only**: AI logic is mocked. Person A's real NVIDIA implementations are not integrated yet.
-2. **Local Tests**: By default, tests run locally. Docker support exists but requires Docker to be installed and running.
-3. **No Auth**: No authentication or authorization (suitable for hackathon demo).
-4. **Single User**: No multi-user support or project isolation beyond project IDs.
-5. **In-Memory Results**: Test results are stored in SQLite but not persisted to external systems.
-
-## Next Steps
-
-1. **Person A Integration**: Replace mocks in `ai_mocks.py` with real NVIDIA Nemotron calls.
-2. **Frontend**: Build React UI to interact with these API endpoints.
-3. **Security**: Add authentication, input validation, and sandboxing for production use.
-4. **Scaling**: Consider PostgreSQL, caching, and async job queues for production workloads.
-
-## Support
-
-For issues or questions, please refer to the master project context or contact the development team.
+Dependencies, secrets, databases, generated reports, build output, and local tooling are excluded from Git.

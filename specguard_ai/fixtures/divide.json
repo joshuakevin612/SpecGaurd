@@ -1,0 +1,13 @@
+{
+  "spec": "Implement divide(a, b) returning a / b for numbers when b is nonzero. If b is zero, raise ValueError.",
+  "requirements": [
+    {"id": "REQ-001", "text": "Implement divide(a, b) returning a / b for numbers when b is nonzero.", "category": "functional", "measurable_criteria": "divide(a, b) returns a / b for nonzero b.", "ambiguous": false, "clarification_note": null},
+    {"id": "REQ-002", "text": "If b is zero, raise ValueError.", "category": "functional", "measurable_criteria": "divide(a, 0) raises ValueError.", "ambiguous": false, "clarification_note": null}
+  ],
+  "tests": [
+    {"id": "TEST-001", "requirement_id": "REQ-001", "pytest_code": "import pytest\nfrom submission import divide\n\n@pytest.mark.parametrize('a,b,expected', [(6,3,2), (5,2,2.5), (-6,3,-2), (0,4,0)])\ndef test_division(a, b, expected):\n    assert divide(a, b) == pytest.approx(expected)\n", "description": "Division preserves fractional and signed results."},
+    {"id": "TEST-002", "requirement_id": "REQ-002", "pytest_code": "import pytest\nfrom submission import divide\n\ndef test_zero_divisor():\n    with pytest.raises(ValueError):\n        divide(5, 0)\n", "description": "A zero divisor raises the required exception."}
+  ],
+  "good_code": "def divide(a, b):\n    if b == 0:\n        raise ValueError('zero divisor')\n    return a / b\n",
+  "bad_code": "def divide(a, b):\n    return a // b\n"
+}

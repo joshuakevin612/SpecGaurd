@@ -1,0 +1,13 @@
+[Unit]
+Description=Encrypted SpecGuard SQLite backup
+
+[Service]
+Type=oneshot
+User=root
+EnvironmentFile=/etc/specguard/backup.env
+ExecStart=/bin/bash /opt/specguard/current/deploy/backup.sh
+UMask=0077
+NoNewPrivileges=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/backups/specguard

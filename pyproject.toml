@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "specguard-ai"
+version = "0.2.0"
+description = "SpecGuard: requirement-based Python test evidence and isolated verification"
+requires-python = ">=3.11"
+dependencies = ["pydantic>=2,<3", "openai>=1,<3", "python-dotenv>=1,<2"]
+
+[project.optional-dependencies]
+backend = ["fastapi>=0.109,<1", "uvicorn>=0.27,<1", "jinja2>=3.1.6,<4", "httpx>=0.28,<1"]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1"]
+orchestration = ["nvidia-nat>=1.9,<1.10", "langchain-core>=1,<2"]
+
+[project.scripts]
+specguard-ai = "specguard_ai.cli:main"
+
+[project.entry-points."nat.plugins"]
+specguard_ai = "specguard_ai.nat_plugin"
+
+[tool.setuptools.packages.find]
+include = ["shared*", "specguard_ai*", "backend*"]
+
+[tool.setuptools.package-data]
+specguard_ai = ["prompts/*.txt", "fixtures/*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I", "UP", "RUF"]
+
+[tool.ruff.lint.per-file-ignores]
+"shared/schemas.py" = ["UP045"]

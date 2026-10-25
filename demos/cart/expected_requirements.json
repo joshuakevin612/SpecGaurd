@@ -1,0 +1,50 @@
+[
+  {
+    "id": "REQ-001",
+    "text": "Implement calculate_total(items, discount_percent=0) returning the sum of price times quantity for the cart.",
+    "category": "functional",
+    "measurable_criteria": "calculate_total(items, discount_percent=0) sums each price multiplied by quantity.",
+    "ambiguous": false,
+    "clarification_note": null
+  },
+  {
+    "id": "REQ-002",
+    "text": "An empty cart returns 0.",
+    "category": "functional",
+    "measurable_criteria": "calculate_total([]) == 0.",
+    "ambiguous": false,
+    "clarification_note": null
+  },
+  {
+    "id": "REQ-003",
+    "text": "Each item must be a dictionary with price and quantity: price must be a finite nonnegative int or float, quantity must be a positive int, and booleans are invalid; invalid items raise ValueError.",
+    "category": "data",
+    "measurable_criteria": "Invalid dictionaries, missing fields, invalid prices, and invalid quantities raise ValueError.",
+    "ambiguous": false,
+    "clarification_note": null
+  },
+  {
+    "id": "REQ-004",
+    "text": "The discount_percent must be a finite int or float between 0 and 100 inclusive, excluding booleans; otherwise raise ValueError.",
+    "category": "data",
+    "measurable_criteria": "Discount values outside [0,100], nonfinite values, booleans, and nonnumeric values raise ValueError.",
+    "ambiguous": false,
+    "clarification_note": null
+  },
+  {
+    "id": "REQ-005",
+    "text": "Apply the percentage discount to the subtotal.",
+    "category": "functional",
+    "measurable_criteria": "The total equals subtotal * (1 - discount_percent / 100) before rounding.",
+    "ambiguous": false,
+    "clarification_note": null
+  },
+  {
+    "id": "REQ-006",
+    "text": "Round the final result to two decimal places using Python round.",
+    "category": "functional",
+    "measurable_criteria": "The final total equals round(discounted_subtotal, 2).",
+    "ambiguous": false,
+    "clarification_note": null
+  }
+]

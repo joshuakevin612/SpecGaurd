@@ -1,0 +1,9 @@
+{
+  "spec": "The application must be fast.",
+  "requirements": [
+    {"id": "REQ-001", "text": "The application must be fast.", "category": "performance", "measurable_criteria": "", "ambiguous": true, "clarification_note": "Which operation, maximum latency, workload, and measurement environment define fast?"}
+  ],
+  "tests": [],
+  "good_code": "# No measurable performance contract yet.\n",
+  "bad_code": "# No measurable performance contract yet.\n"
+}

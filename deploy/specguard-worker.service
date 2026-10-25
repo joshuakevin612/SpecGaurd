@@ -1,0 +1,29 @@
+[Unit]
+Description=SpecGuard private code execution worker
+After=docker.service
+Requires=docker.service
+
+[Service]
+User=specguard-worker
+Group=specguard-release
+SupplementaryGroups=docker
+WorkingDirectory=/opt/specguard/current
+EnvironmentFile=/etc/specguard/worker.env
+ExecStart=/opt/specguard/current/.venv/bin/python -m uvicorn backend.runner.worker:app --host 127.0.0.1 --port 8001 --workers 1 --no-proxy-headers --limit-concurrency 4
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=150
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/specguard-worker
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+# PrivateTmp must stay off: Docker's host daemon needs to see the job mounts.
+PrivateTmp=false
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,20 @@
+functions:
+  parse_requirements:
+    _type: specguard_step
+    operation: parse_spec
+    provider: nvidia
+  generate_tests:
+    _type: specguard_step
+    operation: generate_tests
+    provider: nvidia
+  analyze_code:
+    _type: specguard_step
+    operation: analyze_code
+    provider: nvidia
+  suggest_fixes:
+    _type: specguard_step
+    operation: suggest_fixes
+    provider: nvidia
+workflow:
+  _type: specguard_workflow
+  provider: nvidia

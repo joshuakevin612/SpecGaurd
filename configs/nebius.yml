@@ -1,0 +1,21 @@
+# Reserved for final integration; choosing this config makes billable Nebius calls.
+functions:
+  parse_requirements:
+    _type: specguard_step
+    operation: parse_spec
+    provider: nebius
+  generate_tests:
+    _type: specguard_step
+    operation: generate_tests
+    provider: nebius
+  analyze_code:
+    _type: specguard_step
+    operation: analyze_code
+    provider: nebius
+  suggest_fixes:
+    _type: specguard_step
+    operation: suggest_fixes
+    provider: nebius
+workflow:
+  _type: specguard_workflow
+  provider: nebius
