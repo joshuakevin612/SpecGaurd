@@ -18,7 +18,7 @@ from backend.auth import limited, production
 from backend.database.db import ProjectDB, get_db_connection, init_db
 from backend.reports.generator import ReportGenerator
 from backend.services.verification import VerificationService
-from specguard_ai.provider import ProviderError
+from backend.ai.provider import ProviderError
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
@@ -297,7 +297,7 @@ def capabilities():
 
 @router.get("/demos/{name}")
 def get_demo(name: str):
-    from specguard_ai.demo_assets import load_demo
+    from backend.ai.demo_assets import load_demo
     if name not in {"add", "divide", "cart"}:
         raise HTTPException(status_code=404, detail="Unknown demo")
     fixture = load_demo(name)

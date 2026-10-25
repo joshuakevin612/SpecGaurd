@@ -1,8 +1,0 @@
-[
-  {
-    "id": "TEST-001",
-    "requirement_id": "REQ-001",
-    "pytest_code": "import pytest\nfrom submission import add\n\n@pytest.mark.parametrize('a,b,expected', [(2,3,5), (-2,3,1), (0,0,0), (-4,-5,-9)])\ndef test_add(a, b, expected):\n    assert add(a, b) == expected\n",
-    "description": "Addition with positive, negative and zero integers."
-  }
-]

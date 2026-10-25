@@ -14,10 +14,10 @@ from threading import RLock
 
 from backend.database.db import ProjectDB, get_db_connection
 from backend.runner.pytest_runner import PytestRunner
-from specguard_ai.api import analyze_code
-from specguard_ai.budget import CURRENT, run_budget
-from specguard_ai.provider import using_provider
-from specguard_ai.workflow import Preparation, assemble_preparation, finish, prepare
+from backend.ai.api import analyze_code
+from backend.ai.budget import CURRENT, run_budget
+from backend.ai.provider import using_provider
+from backend.ai.workflow import Preparation, assemble_preparation, finish, prepare
 
 _LOCK = RLock()
 
@@ -112,7 +112,7 @@ class VerificationService:
                                  'execution_mode': ('private-worker' if os.getenv('SPECGUARD_WORKER_URL') else
                                                     'docker' if self.runner.use_docker else 'trusted-local'),
                                  'prompt_sha256': hashlib.sha256(b''.join(
-                                     p.read_bytes() for p in sorted((Path(__file__).resolve().parents[2] / 'specguard_ai/prompts').glob('*.txt')))).hexdigest(),
+                                     p.read_bytes() for p in sorted((Path(__file__).resolve().parents[2] / 'backend/ai/prompts').glob('*.txt')))).hexdigest(),
                                  'provider': prepared.provider,
                                  'model': os.getenv(prepared.provider.upper() + '_MODEL', 'mock'),
                                  'code_model': os.getenv('NVIDIA_CODE_MODEL') if prepared.provider == 'nvidia' else None,

@@ -4,7 +4,7 @@ import time
 
 import httpx
 
-from shared.schemas import TestResult
+from backend.shared.schemas import TestResult
 
 
 class RemoteRunner:

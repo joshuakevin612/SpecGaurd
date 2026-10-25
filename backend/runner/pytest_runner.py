@@ -10,7 +10,7 @@ import time
 import uuid
 from pathlib import Path
 
-from shared.schemas import GeneratedTest, TestResult
+from backend.shared.schemas import GeneratedTest, TestResult
 
 from .cases import extract, matches
 

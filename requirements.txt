@@ -1,2 +1,0 @@
-# Conventional entry point for dependency update tooling.
--r requirements.lock

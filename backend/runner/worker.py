@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from starlette.responses import JSONResponse
 
 from backend.runner.pytest_runner import PytestRunner
-from shared.schemas import GeneratedTest
+from backend.shared.schemas import GeneratedTest
 
 inner = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 slot = BoundedSemaphore(1)

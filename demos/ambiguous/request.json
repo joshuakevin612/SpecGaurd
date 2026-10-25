@@ -1,5 +1,0 @@
-{
-  "action": "prepare",
-  "spec_text": "The application must be fast.",
-  "code": "# No measurable performance contract yet.\n"
-}

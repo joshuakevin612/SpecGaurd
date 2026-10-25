@@ -1,18 +1,33 @@
 # SpecGuard
 
-SpecGuard checks Python functions against written requirements. It combines a React workbench, a FastAPI API, NVIDIA/Nebius model integration, deterministic demo fixtures, SQLite persistence, and an isolated execution worker.
+A React frontend and FastAPI backend for checking Python functions against written requirements, reviewing test results, and retesting suggested fixes.
 
-Create a project, generate test cases, inspect requirement-level results, review proposed fixes, and retest against the original cases. Accounts, private projects, JSON/HTML reports, execution limits, and production deployment configuration are included.
+## Project layout
 
-Generated tests provide finite behavioral evidence, not formal proof. Supported submissions are synchronous top-level Python functions with JSON inputs and outputs; arbitrary dependencies, async functions, and class APIs are unsupported.
-
-## Requirements
-
-- Python 3.11 (the CI-tested version)
-- Node.js 22 and npm
-- Docker for isolated execution; the local demo below can run without Docker
+```text
+backend/
+  ai/                 AI providers, test planning, prompts, and demo fixtures
+  api/                API routes
+  database/           SQLite persistence
+  reports/            Report generation
+  runner/             Local and isolated execution
+  services/           Verification pipeline
+  shared/             Data models
+  .env.example        Backend configuration template
+  requirements.txt    Locked Python dependencies
+  Dockerfile.runner   Isolated runner image
+  main.py             API entry point
+frontend/
+  public/             Static assets
+  src/                React application
+  package.json        Frontend dependencies and commands
+  package-lock.json   Locked npm dependencies
+README.md
+```
 
 ## Setup
+
+Requires **Python 3.11**, **Node.js 22**, and npm. Run commands from the repository root.
 
 ```sh
 git clone https://github.com/joshuakevin612/SpecGaurd.git
@@ -20,106 +35,77 @@ cd SpecGaurd
 python -m venv .venv
 ```
 
-Activate the environment:
+Activate the virtual environment and copy the configuration:
 
 ```powershell
 # Windows PowerShell
 .\.venv\Scripts\Activate.ps1
+Copy-Item backend/.env.example backend/.env
 ```
 
 ```sh
 # Linux / macOS
 source .venv/bin/activate
+cp backend/.env.example backend/.env
 ```
 
-Install the locked dependencies and create your local configuration:
+Install dependencies:
 
 ```sh
-python -m pip install -r requirements.txt
+python -m pip install -r backend/requirements.txt
 npm --prefix frontend ci
 ```
 
-```powershell
-# Windows PowerShell
-Copy-Item .env.example .env
+## Run
+
+For a demo using only trusted code on your own computer, set these values in `backend/.env`:
+
+```dotenv
+SPECGUARD_RUNNER=local
+SPECGUARD_BACKEND_PROVIDER=mock
 ```
+
+Start the backend from the repository root with the virtual environment activated:
 
 ```sh
-# Linux / macOS
-cp .env.example .env
+python -m uvicorn backend.main:app --env-file backend/.env --host 127.0.0.1 --port 8000
 ```
 
-Keep `.env` private. Mock mode needs no provider credentials.
-
-## Run locally
-
-For a trusted local demo, start the API in your activated environment:
-
-```powershell
-# Windows PowerShell
-$env:SPECGUARD_RUNNER = 'local'
-$env:SPECGUARD_BACKEND_PROVIDER = 'mock'
-python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
-```
-
-```sh
-# Linux / macOS
-SPECGUARD_RUNNER=local SPECGUARD_BACKEND_PROVIDER=mock python -m uvicorn backend.main:app --host 127.0.0.1 --port 8000
-```
-
-In a second terminal, start the frontend:
+In another terminal, from the repository root:
 
 ```sh
 npm --prefix frontend run dev
 ```
 
-Open [the workbench](http://127.0.0.1:5173). Use **New verification**, then **Load cart demo**, confirm the sharing notice, and run verification. Review a proposed fix and select **Retest original tests**. The API is available at [localhost:8000](http://127.0.0.1:8000); development API documentation is at [/docs](http://127.0.0.1:8000/docs).
+Open [the frontend](http://127.0.0.1:5173). Select **New verification**, then **Load cart demo**, confirm the sharing notice, and run verification. Inspect the results, review a proposed fix, and select **Retest original tests**.
 
-Mock mode supports the bundled demo specifications only. Projects and reports persist in `specguard.db`, created automatically. Local execution runs submitted code with your account permissions: use it only for trusted code and keep the service bound to localhost.
+The backend runs at [localhost:8000](http://127.0.0.1:8000), with API documentation at [/docs](http://127.0.0.1:8000/docs). SQLite creates `specguard.db` automatically. Keep `backend/.env` and databases out of Git.
 
-### Live AI and accounts
+### AI configuration
 
-For arbitrary specifications, configure `NVIDIA_API_KEY`, `NVIDIA_BASE_URL`, `NVIDIA_MODEL`, and `NVIDIA_CODE_MODEL` in `.env`, then set `SPECGUARD_BACKEND_PROVIDER=nvidia` before starting the API. Nebius is available by explicitly selecting `nebius` and configuring its matching variables. Providers never fall back to each other; live calls incur provider usage.
+Mock mode supports the bundled demos without API keys. For arbitrary specifications, set `SPECGUARD_BACKEND_PROVIDER=nvidia` and fill in `NVIDIA_API_KEY`, `NVIDIA_BASE_URL`, `NVIDIA_MODEL`, and `NVIDIA_CODE_MODEL` in `backend/.env`. Nebius is also supported by explicitly selecting `nebius` and configuring its matching variables. Restart the backend after configuration changes. Live model calls incur provider usage.
 
-Set `SPECGUARD_AUTH_REQUIRED=true` before startup to enable the local account/sign-in flow. See [.env.example](.env.example) for configurable quotas, origins, and database settings. Never put provider keys or worker credentials in frontend `VITE_` variables.
+Set `SPECGUARD_AUTH_REQUIRED=true` to enable accounts and sign-in locally. Other settings are described in [backend/.env.example](backend/.env.example). Provider keys belong only in the backend configuration.
 
-### Docker runner
+### Isolated execution
 
-Docker is the default runner. With Docker running, build its image:
-
-```sh
-docker build -t specguard-runner:local -f backend/runner/Dockerfile .
-```
-
-Start the API with `SPECGUARD_RUNNER=docker`. The runner disables networking, applies resource/time limits, and uses a nonroot user with a read-only root filesystem. Expected answers stay outside the submission container.
-
-## Checks
-
-In the activated environment:
+With Docker running, build the runner from the repository root:
 
 ```sh
-python -m pip install -r requirements-dev.txt
-python scripts/check.py
+docker build -t specguard-runner:local -f backend/Dockerfile.runner backend
 ```
 
-This runs Python linting/tests, dependency consistency, frontend type checking, and the production build. Standard tests use temporary databases and mock providers; Docker integration tests are opt-in with `SPECGUARD_DOCKER_TESTS=1`.
+Set `SPECGUARD_RUNNER=docker` in `backend/.env` and restart the backend. Local mode executes submissions with your account permissions; use it only for trusted code. Public hosting requires HTTPS, authentication, and a separate private worker with gVisor; the local setup above is intended for development.
 
-## Production setup
+### Frontend build
 
-Follow [the deployment runbook](docs/DEPLOYMENT.md) for HTTPS, separate API/worker accounts, the private authenticated worker, Docker/gVisor, service configuration, backups, and rollback. Public deployment requires these controls and live provider configuration.
+```sh
+npm --prefix frontend run typecheck
+npm --prefix frontend run build
+```
 
-After checks and the frontend build, `python scripts/package_release.py` creates a deployment archive and checksums in ignored `artifacts/releases/`.
+The production frontend is generated in `frontend/dist/` and uses the same-origin `/api` URL. A production web server must serve those assets and proxy `/api` to the backend. To use another API URL, set `VITE_API_URL` when building.
 
-## Source layout
+## Supported code
 
-| Path | Purpose |
-| --- | --- |
-| `frontend/` | React/TypeScript workbench and Vite build |
-| `backend/` | API, accounts, persistence, reports, and execution worker |
-| `specguard_ai/` | Model providers, test planning, validation, and repairs |
-| `shared/` | Shared data models |
-| `configs/`, `demos/` | Provider presets and runnable demo fixtures |
-| `deploy/`, `scripts/` | Deployment configuration and operational tools |
-| `tests/`, `.github/` | Regression tests and automated checks |
-
-Dependencies, secrets, databases, generated reports, build output, and local tooling are excluded from Git.
+Verification supports synchronous top-level Python functions with JSON inputs and outputs. Class APIs, async functions, arbitrary third-party submission packages, and network-dependent programs are unsupported. Generated tests provide finite behavioral evidence, not formal proof.
